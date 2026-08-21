@@ -72,9 +72,12 @@ export default function App() {
 
             <section className={`user-area ${game.currentPlayer === 0 ? 'is-active' : ''}`}>
               <div className="user-meta">
-                <span className="wind-chip">{user.wind}</span>
-                <span><strong>你的手牌</strong><small>{user.score.toLocaleString()} 点</small></span>
-                {game.dealer === 0 && <span className="dealer-label">庄家</span>}
+                <span className={`avatar avatar-${user.color}`}>{user.avatar}</span>
+                <span className="user-copy"><strong>你</strong><small>{user.score.toLocaleString()} 点</small></span>
+                <span className="seat-badges">
+                  <span className="wind-chip">{user.wind}</span>
+                  {game.dealer === 0 && <span className="dealer-dot" title="庄家">庄</span>}
+                </span>
               </div>
               {user.melds.length > 0 && <div className="user-melds">{user.melds.map((meld, index) => <div className="meld-group" key={index}>{meld.tiles.map((tile) => <Tile key={tile.id} tile={tile} small />)}</div>)}</div>}
               <div className="user-hand">

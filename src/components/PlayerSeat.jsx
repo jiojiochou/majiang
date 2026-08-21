@@ -11,10 +11,12 @@ export default function PlayerSeat({ player, position, active, dealer }) {
         <span className={`avatar avatar-${player.color}`}>{player.avatar}</span>
         <span className="player-copy">
           <strong>{player.name}</strong>
-          <span>{player.score.toLocaleString()}</span>
+          <span>{player.score.toLocaleString()} 点</span>
         </span>
-        <span className="wind-chip">{player.wind}</span>
-        {dealer === player.id && <span className="dealer-dot" title="庄家">庄</span>}
+        <span className="seat-badges">
+          <span className="wind-chip">{player.wind}</span>
+          {dealer === player.id && <span className="dealer-dot" title="庄家">庄</span>}
+        </span>
       </div>
 
       <div className={`opponent-rack rack-${position}`} aria-label={`${hiddenCount}张手牌`}>
