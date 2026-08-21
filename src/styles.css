@@ -144,12 +144,27 @@ button.tile:disabled { cursor: default; }
 .tile.is-selected { transform: translateY(-12px) !important; box-shadow: 0 12px 8px rgba(0,0,0,.28); border-color: #f3b841; }
 .tile.is-selected::after { content: ''; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #f0b539; bottom: -12px; }
 .tile.is-drawn { margin-left: 8px; }
-.tile-small { --current-w: clamp(19px, 1.78vw, 27px); height: calc(var(--current-w) * 1.38); border-bottom-width: 2px; border-radius: 2px; padding: 1px; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.tile-small {
+  --current-w: clamp(19px, 1.78vw, 27px);
+  height: calc(var(--current-w) * 1.38);
+  border-bottom-width: 2px;
+  border-radius: 2px;
+  padding: 1px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
 
 .tile-back { background: #ded7c6; border-color: #ebe5d8; border-bottom-color: #9d9a88; padding: 3px; }
 .tile-back span { width: 100%; height: 100%; border: 1px solid #0a6853; background-color: #116f59; background-image: repeating-linear-gradient(45deg, transparent 0 3px, rgba(255,255,255,.11) 3px 4px); }
 .tile-small .character-mark b, .tile-small .bamboo-mark { font-size: 12px; }
 .tile-small .character-mark small, .tile-small .bamboo-mark small { font-size: 6px; }
+.tile-small .honor { font-size: calc(var(--current-w) * .56); line-height: 1; }
+.tile-small .bamboo-bird { font-size: calc(var(--current-w) * .48); line-height: 1; }
+.tile-small .character-mark,
+.tile-small .bamboo-mark,
+.tile-small .bamboo-bird,
+.tile-small .honor,
+.tile-small .dot-grid { max-width: 100%; max-height: 100%; overflow: hidden; }
 .character-mark, .bamboo-mark { display: grid; place-items: center; font-family: 'Noto Serif SC', serif; }
 .character-mark b { font-size: clamp(18px, 1.6vw, 24px); color: #24302c; }
 .character-mark small { font-size: clamp(9px, .8vw, 12px); color: #c33f34; }

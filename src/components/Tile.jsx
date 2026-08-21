@@ -8,7 +8,7 @@ function SuitMark({ tile }) {
   }
   if (tile.suit === 's') {
     if (tile.value === 1) return <span className="bamboo-bird">雀</span>
-    return <span className="bamboo-mark">{tile.value}<small>索</small></span>
+    return <span className="bamboo-mark">{tile.value}<small>条</small></span>
   }
   return <span className="character-mark"><b>{tile.value}</b><small>萬</small></span>
 }
