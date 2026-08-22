@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">四风牌局 Logo</title>
+  <desc id="description">一枚以麻将牌和汉字四为核心的墨绿色产品标志</desc>
+
+  <path
+    fill="#0a3c31"
+    d="M258 72h508c102 0 186 84 186 186v508c0 102-84 186-186 186H258c-102 0-186-84-186-186V258C72 156 156 72 258 72Z"
+  />
+  <path
+    fill="#155a48"
+    d="M274 104h476c93 0 170 77 170 170v476c0 93-77 170-170 170H274c-93 0-170-77-170-170V274c0-93 77-170 170-170Z"
+  />
+
+  <path
+    fill="#b88a2d"
+    d="M305 196h414c52 0 94 42 94 94v470c0 52-42 94-94 94H305c-52 0-94-42-94-94V290c0-52 42-94 94-94Z"
+  />
+  <path
+    fill="#d6a53a"
+    d="M305 174h414c52 0 94 42 94 94v464c0 52-42 94-94 94H305c-52 0-94-42-94-94V268c0-52 42-94 94-94Z"
+  />
+  <path
+    fill="#f7f3ea"
+    d="M307 194h410c41 0 74 33 74 74v450c0 41-33 74-74 74H307c-41 0-74-33-74-74V268c0-41 33-74 74-74Z"
+  />
+  <path
+    fill="none"
+    stroke="#d7d3c9"
+    stroke-width="10"
+    d="M315 216h394c32 0 58 26 58 58v438c0 32-26 58-58 58H315c-32 0-58-26-58-58V274c0-32 26-58 58-58Z"
+  />
+
+  <path fill="#d6a53a" d="M493 244h38v76h-38zM493 666h38v76h-38zM284 474h76v38h-76zM664 474h76v38h-76z" />
+  <circle cx="716" cy="268" r="25" fill="#e55d48" />
+
+  <text
+    x="512"
+    y="635"
+    fill="#0a3c31"
+    font-family="Noto Serif SC, Songti SC, STSong, serif"
+    font-size="380"
+    font-weight="900"
+    text-anchor="middle"
+  >四</text>
+</svg>
