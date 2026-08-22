@@ -1,6 +1,6 @@
 import Tile from './Tile'
 
-export default function PlayerSeat({ player, position, active, dealer }) {
+export default function PlayerSeat({ player, position, active, dealer, showRack = true, showMelds = true }) {
   const isTop = position === 'top'
   const isSide = position === 'left' || position === 'right'
   const hiddenCount = player.hand.length
@@ -19,13 +19,15 @@ export default function PlayerSeat({ player, position, active, dealer }) {
         </span>
       </div>
 
-      <div className={`opponent-rack rack-${position}`} aria-label={`${hiddenCount}张手牌`}>
-        {Array.from({ length: Math.min(hiddenCount, 13) }, (_, index) => (
-          <Tile key={index} hidden small={isTop || isSide} />
-        ))}
-      </div>
+      {showRack && (
+        <div className={`opponent-rack rack-${position}`} aria-label={`${hiddenCount}张手牌`}>
+          {Array.from({ length: Math.min(hiddenCount, 13) }, (_, index) => (
+            <Tile key={index} hidden small={isTop || isSide} />
+          ))}
+        </div>
+      )}
 
-      {player.melds.length > 0 && (
+      {showMelds && player.melds.length > 0 && (
         <div className="opponent-melds">
           {player.melds.flatMap((meld) => meld.tiles.map((tile) => <Tile key={tile.id} tile={tile} small />))}
         </div>

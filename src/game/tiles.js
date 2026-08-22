@@ -51,7 +51,7 @@ export function shuffle(items) {
 
 function countsFromTiles(tiles) {
   const counts = new Map()
-  tiles.forEach((tile) => counts.set(tileKey(tile), (counts.get(tileKey(tile)) || 0) + 1))
+  sortTiles(tiles).forEach((tile) => counts.set(tileKey(tile), (counts.get(tileKey(tile)) || 0) + 1))
   return counts
 }
 
@@ -113,6 +113,29 @@ export function claimOptions(hand, tile, canChow, meldCount = 0) {
     ].filter(([a, b]) => a >= 1 && b <= 9 && values.has(a) && values.has(b))
     sequences.forEach((sequence) => options.push({ type: 'chow', label: '吃', sequence }))
   }
+  return options
+}
+
+export function selfKongOptions(hand, melds) {
+  const options = []
+
+  melds.forEach((meld, meldIndex) => {
+    if (meld.type !== 'pung' || meld.tiles.length !== 3) return
+    const key = tileKey(meld.tiles[0])
+    const tile = hand.find((item) => tileKey(item) === key)
+    if (tile) options.push({ kind: 'added', meldIndex, key, label: tileLabel(tile) })
+  })
+
+  const groups = new Map()
+  hand.forEach((tile) => {
+    const key = tileKey(tile)
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push(tile)
+  })
+  groups.forEach((tiles, key) => {
+    if (tiles.length >= 4) options.push({ kind: 'concealed', key, label: tileLabel(tiles[0]) })
+  })
+
   return options
 }
 

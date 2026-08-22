@@ -4,7 +4,7 @@ export default function CenterConsole({ round, honba, wallCount, currentWind, me
   return (
     <div className="center-console">
       <div className="console-head">
-        <span>東風戦</span>
+        <span>东风战</span>
         <CircleDot size={14} />
         <span>{honba} 本场</span>
       </div>

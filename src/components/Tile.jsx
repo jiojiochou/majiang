@@ -10,10 +10,10 @@ function SuitMark({ tile }) {
     if (tile.value === 1) return <span className="bamboo-bird">雀</span>
     return <span className="bamboo-mark">{tile.value}<small>条</small></span>
   }
-  return <span className="character-mark"><b>{tile.value}</b><small>萬</small></span>
+  return <span className="character-mark"><b>{tile.value}</b><small>万</small></span>
 }
 
-export default function Tile({ tile, hidden = false, selected = false, drawn = false, small = false, onClick, disabled = false }) {
+export default function Tile({ tile, hidden = false, selected = false, drawn = false, small = false, onClick, onKeyDown, disabled = false }) {
   if (hidden) return <div className={`tile tile-back ${small ? 'tile-small' : ''}`} aria-hidden="true"><span /></div>
   const classes = [
     'tile',
@@ -24,7 +24,7 @@ export default function Tile({ tile, hidden = false, selected = false, drawn = f
   ].filter(Boolean).join(' ')
   const label = tileLabel(tile)
   return onClick ? (
-    <button className={classes} onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={selected}>
+    <button className={classes} onClick={onClick} onKeyDown={onKeyDown} disabled={disabled} aria-label={label} aria-pressed={selected}>
       <SuitMark tile={tile} />
     </button>
   ) : <div className={classes} aria-label={label}><SuitMark tile={tile} /></div>
