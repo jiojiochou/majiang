@@ -258,7 +258,7 @@ button.tile:disabled { cursor: default; }
 .secondary-button { border: 1px solid #c8c5bc; color: #52615a; background: transparent; }
 
 @media (max-width: 700px) {
-  :root { --tile-w: clamp(28px, 7vw, 38px); }
+  :root { --tile-w: clamp(22px, 6.6vw, 38px); }
   .topbar { height: 56px; padding: 0 12px; grid-template-columns: 1fr auto; }
   .brand-mark { width: 32px; height: 32px; font-size: 17px; }
   .brand strong { font-size: 14px; }.brand small { display: none; }

@@ -156,8 +156,14 @@ function Tile3D({ tile, position, rotation = [0, 0, 0], scale = 1, faceDown = fa
     <group position={position} rotation={rotation}>
       <mesh castShadow={castShadow} receiveShadow>
         <boxGeometry args={[width, height, depth]} />
-        <meshStandardMaterial color="#ded4c1" roughness={0.56} metalness={0.02} />
+        <meshStandardMaterial color={faceDown ? '#176d58' : '#ded4c1'} roughness={0.56} metalness={0.02} />
       </mesh>
+      {faceDown && (
+        <mesh position={[0, -height * 0.38, 0]} receiveShadow>
+          <boxGeometry args={[width * 1.012, height * 0.24, depth * 1.012]} />
+          <meshStandardMaterial color="#ded4c1" roughness={0.58} metalness={0.01} />
+        </mesh>
+      )}
       <mesh position={[0, height / 2 + 0.004, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[width * 0.88, depth * 0.88]} />
         <meshStandardMaterial map={texture} roughness={0.48} />
@@ -197,27 +203,51 @@ function TableBody() {
         <ringGeometry args={[4.65, 4.7, 4]} />
         <meshBasicMaterial color="#c69b4a" transparent opacity={0.28} />
       </mesh>
+      <mesh position={[0, -0.025, -3.72]} receiveShadow>
+        <boxGeometry args={[9.1, 0.045, 0.78]} />
+        <meshStandardMaterial color="#08493e" roughness={0.88} />
+      </mesh>
+      <mesh position={[0, -0.025, 3.72]} receiveShadow>
+        <boxGeometry args={[9.1, 0.045, 0.78]} />
+        <meshStandardMaterial color="#08493e" roughness={0.88} />
+      </mesh>
+      <mesh position={[-5.4, -0.025, 0]} receiveShadow>
+        <boxGeometry args={[0.78, 0.045, 8.55]} />
+        <meshStandardMaterial color="#08493e" roughness={0.88} />
+      </mesh>
+      <mesh position={[5.4, -0.025, 0]} receiveShadow>
+        <boxGeometry args={[0.78, 0.045, 8.55]} />
+        <meshStandardMaterial color="#08493e" roughness={0.88} />
+      </mesh>
     </group>
   )
 }
 
 function WallTiles({ count }) {
-  const pairCount = Math.min(44, Math.ceil(count / 2))
-  return Array.from({ length: pairCount }, (_, index) => {
+  const stackCount = Math.min(68, Math.ceil(count / 2))
+  const stacksPerSide = Array.from({ length: 4 }, (_, side) => (
+    Math.floor(stackCount / 4) + (side < stackCount % 4 ? 1 : 0)
+  ))
+  const sideOffsets = stacksPerSide.reduce((offsets, sideCount, side) => {
+    offsets[side] = side === 0 ? 0 : offsets[side - 1] + stacksPerSide[side - 1]
+    return offsets
+  }, [])
+
+  return Array.from({ length: stackCount }, (_, index) => {
     const side = index % 4
-    const offsetIndex = Math.floor(index / 4)
-    const sideCount = Math.ceil(pairCount / 4)
-    const offset = (offsetIndex - (sideCount - 1) / 2) * 0.62
-    const position = side === 0 ? [offset, 0.08, -4.15]
-      : side === 1 ? [5.98, 0.08, offset]
-        : side === 2 ? [-offset, 0.08, 4.15]
-          : [-5.98, 0.08, -offset]
+    const sideIndex = Math.floor(index / 4)
+    const offset = (sideIndex - (stacksPerSide[side] - 1) / 2) * 0.48
+    const position = side === 0 ? [offset, 0.08, -3.72]
+      : side === 1 ? [5.4, 0.08, offset]
+        : side === 2 ? [-offset, 0.08, 3.72]
+          : [-5.4, 0.08, -offset]
     const rotation = side % 2 ? [0, Math.PI / 2, 0] : [0, 0, 0]
-    const hasTopTile = index * 2 + 1 < count
+    const stackOrder = sideOffsets[side] + sideIndex
+    const hasTopTile = stackOrder * 2 + 1 < count
     return (
       <group key={index}>
-        <Tile3D position={position} rotation={rotation} scale={0.8} faceDown castShadow={false} />
-        {hasTopTile && <Tile3D position={[position[0], position[1] + 0.14, position[2]]} rotation={rotation} scale={0.8} faceDown castShadow={false} />}
+        <Tile3D position={position} rotation={rotation} scale={0.92} faceDown castShadow={false} />
+        {hasTopTile && <Tile3D position={[position[0], position[1] + 0.155, position[2]]} rotation={rotation} scale={0.92} faceDown castShadow={false} />}
       </group>
     )
   })
@@ -227,12 +257,12 @@ function OpponentHand({ player, position }) {
   const tileCount = Math.min(player.hand.length, 13)
   return Array.from({ length: tileCount }, (_, index) => {
     const offset = (index - (tileCount - 1) / 2) * 0.53
-    const tilePosition = position === 'top' ? [offset, 0.12, -3.32]
-      : position === 'left' ? [-5.2, 0.12, -offset]
-        : [5.2, 0.12, offset]
-    const rotation = position === 'top' ? [0, Math.PI, 0]
-      : position === 'left' ? [0, Math.PI / 2, 0]
-        : [0, -Math.PI / 2, 0]
+    const tilePosition = position === 'top' ? [offset, 0.4, -4.43]
+      : position === 'left' ? [-6.28, 0.4, -offset]
+        : [6.28, 0.4, offset]
+    const rotation = position === 'top' ? [Math.PI / 2, 0, 0]
+      : position === 'left' ? [-Math.PI / 2, 0, -Math.PI / 2]
+        : [-Math.PI / 2, 0, Math.PI / 2]
     return <Tile3D key={index} position={tilePosition} rotation={rotation} scale={0.88} faceDown />
   })
 }
@@ -315,9 +345,9 @@ function CameraRig() {
   const { camera, size } = useThree()
   useEffect(() => {
     const aspect = size.width / size.height
-    const distance = aspect < 0.9 ? 20 : aspect < 1.25 ? 19 : 16
+    const distance = aspect < 0.9 ? 19.5 : aspect < 1.25 ? 17.5 : 14.7
     camera.position.set(0, distance * 0.71, distance * 0.7)
-    camera.fov = aspect < 0.9 ? 35 : 38
+    camera.fov = aspect < 0.9 ? 35 : 37
     camera.near = 0.1
     camera.far = 80
     camera.lookAt(0, 0, 0.25)
