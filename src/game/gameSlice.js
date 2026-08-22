@@ -140,10 +140,12 @@ const gameSlice = createSlice({
       const [tile] = hand.splice(fromIndex, 1)
       hand.splice(toIndex, 0, tile)
     },
-    discardSelected(state) {
-      if (state.phase !== 'discard' || state.currentPlayer !== 0 || !state.selectedTileId) return
+    discardSelected(state, action) {
+      if (state.phase !== 'discard' || state.currentPlayer !== 0) return
+      const tileId = action.payload || state.selectedTileId
+      if (!tileId) return
       const hand = state.players[0].hand
-      const index = hand.findIndex((tile) => tile.id === state.selectedTileId)
+      const index = hand.findIndex((tile) => tile.id === tileId)
       if (index < 0) return
       const [tile] = hand.splice(index, 1)
       state.players[0].discards.push(tile)

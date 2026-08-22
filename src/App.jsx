@@ -37,10 +37,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [dispatch, game.selectedTileId])
 
-  useEffect(() => () => {
-    if (dragState.current?.holdTimer) window.clearTimeout(dragState.current.holdTimer)
-  }, [])
-
   const startTileDrag = (element, pointerId, tileId) => {
     const drag = dragState.current
     if (!drag || drag.pointerId !== pointerId || drag.tileId !== tileId) return
@@ -61,21 +57,17 @@ export default function App() {
       startY: event.clientY,
       dragging: false,
       lastTargetId: tileId,
-      holdTimer: null,
     }
     dragState.current = drag
-    if (event.pointerType === 'touch') {
-      drag.holdTimer = window.setTimeout(() => startTileDrag(element, event.pointerId, tileId), 220)
-    } else {
-      try { element.setPointerCapture(event.pointerId) } catch { /* Pointer capture is best-effort. */ }
-    }
+    // Capture the pointer immediately, but only enter drag mode after movement.
+    // A long ordinary touch must remain a click so selecting a tile is reliable.
+    try { element.setPointerCapture(event.pointerId) } catch { /* Pointer capture is best-effort. */ }
   }
 
   const handleTilePointerMove = (event) => {
     const drag = dragState.current
     if (!drag || drag.pointerId !== event.pointerId) return
     if (!drag.dragging) {
-      if (drag.pointerType === 'touch') return
       if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 5) return
       startTileDrag(event.currentTarget, event.pointerId, drag.tileId)
     }
@@ -90,7 +82,6 @@ export default function App() {
   const finishTileDrag = (event, cancelled = false) => {
     const drag = dragState.current
     if (!drag || drag.pointerId !== event.pointerId) return
-    if (drag.holdTimer) window.clearTimeout(drag.holdTimer)
     if (drag.dragging && !cancelled) {
       suppressTileClick.current = true
       window.setTimeout(() => { suppressTileClick.current = false }, 0)
@@ -113,7 +104,7 @@ export default function App() {
 
   const handleTileClick = (tileId) => {
     if (suppressTileClick.current) return
-    if (game.selectedTileId === tileId) dispatch(discardSelected())
+    if (game.selectedTileId === tileId) dispatch(discardSelected(tileId))
     else dispatch(selectTile(tileId))
   }
 
@@ -175,13 +166,14 @@ export default function App() {
                         onPointerUp={finishTileDrag}
                         onPointerCancel={(event) => finishTileDrag(event, true)}
                         onContextMenu={(event) => event.preventDefault()}
+                        onClick={() => handleTileClick(tile.id)}
                       >
                         <Tile
                           tile={tile}
                           selected={game.selectedTileId === tile.id}
                           drawn={game.drawnTileId === tile.id}
                           disabled={game.phase !== 'discard' || game.currentPlayer !== 0}
-                          onClick={() => handleTileClick(tile.id)}
+                          onClick={(event) => { event.stopPropagation(); handleTileClick(tile.id) }}
                           onKeyDown={(event) => handleTileKeyDown(event, tile.id, index)}
                         />
                       </div>
