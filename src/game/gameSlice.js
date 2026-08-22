@@ -8,7 +8,7 @@ import {
   shuffle,
   sortTiles,
   tileKey,
-} from './tiles'
+} from './tiles.js'
 
 const PLAYER_INFO = [
   { id: 0, name: '你', wind: '东', avatar: '岚', color: 'coral' },
@@ -47,6 +47,7 @@ function createInitialState() {
     honba: 0,
     phase: 'discard',
     lastDiscard: null,
+    latestDiscard: null,
     claimOptions: [],
     selectedTileId: null,
     drawnTileId: players[0].hand.at(-1)?.id ?? null,
@@ -147,6 +148,7 @@ const gameSlice = createSlice({
       const [tile] = hand.splice(index, 1)
       state.players[0].discards.push(tile)
       state.lastDiscard = { tile, playerId: 0 }
+      state.latestDiscard = { tileId: tile.id, playerId: 0 }
       state.selectedTileId = null
       state.drawnTileId = null
       state.canDeclareWin = false
@@ -174,6 +176,7 @@ const gameSlice = createSlice({
       const [tile] = player.hand.splice(index, 1)
       player.discards.push(tile)
       state.lastDiscard = { tile, playerId: player.id }
+      state.latestDiscard = { tileId: tile.id, playerId: player.id }
       const options = claimOptions(state.players[0].hand, tile, player.id === 3, state.players[0].melds.length)
       if (options.length) {
         state.claimOptions = options
@@ -189,6 +192,7 @@ const gameSlice = createSlice({
       const { tile, playerId } = state.lastDiscard
       const discarder = state.players[playerId]
       discarder.discards.pop()
+      state.latestDiscard = null
       if (option.type === 'win') {
         settleWin(state, 0, playerId)
         return
@@ -204,6 +208,7 @@ const gameSlice = createSlice({
       state.players[0].melds.push({ type: option.type, tiles: sortTiles([...claimedTiles, tile]), from: playerId })
       state.currentPlayer = 0
       state.lastDiscard = null
+      state.latestDiscard = null
       state.claimOptions = []
       state.phase = 'discard'
       state.message = `${option.label} · 请打出一张牌`
@@ -257,6 +262,7 @@ const gameSlice = createSlice({
       state.currentPlayer = nextDealer
       state.phase = nextDealer === 0 ? 'discard' : 'ai'
       state.lastDiscard = null
+      state.latestDiscard = null
       state.claimOptions = []
       state.selectedTileId = null
       state.drawnTileId = nextDealer === 0 ? state.players[0].hand.at(-1)?.id ?? null : null

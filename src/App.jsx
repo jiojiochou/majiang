@@ -111,6 +111,12 @@ export default function App() {
     dispatch(reorderHand({ tileId, targetTileId: target.id }))
   }
 
+  const handleTileClick = (tileId) => {
+    if (suppressTileClick.current) return
+    if (game.selectedTileId === tileId) dispatch(discardSelected())
+    else dispatch(selectTile(tileId))
+  }
+
   const handleControlClaim = (option) => {
     if (option.type === 'selfWin') dispatch(declareSelfWin())
     else dispatch(claimTile(option))
@@ -138,12 +144,9 @@ export default function App() {
           <div className="mahjong-table">
             <ThreeMahjongTable
               players={game.players}
+              latestDiscard={game.latestDiscard}
               wallCount={game.wall.length}
               currentPlayer={game.currentPlayer}
-              round={game.round}
-              honba={game.honba}
-              currentWind={game.players[game.currentPlayer].wind}
-              message={game.message}
             />
             <PlayerSeat player={game.players[2]} position="top" active={game.currentPlayer === 2} dealer={game.dealer} showRack={false} showMelds={false} />
             <PlayerSeat player={game.players[3]} position="left" active={game.currentPlayer === 3} dealer={game.dealer} showRack={false} showMelds={false} />
@@ -178,9 +181,7 @@ export default function App() {
                           selected={game.selectedTileId === tile.id}
                           drawn={game.drawnTileId === tile.id}
                           disabled={game.phase !== 'discard' || game.currentPlayer !== 0}
-                          onClick={() => {
-                            if (!suppressTileClick.current) dispatch(selectTile(tile.id))
-                          }}
+                          onClick={() => handleTileClick(tile.id)}
                           onKeyDown={(event) => handleTileKeyDown(event, tile.id, index)}
                         />
                       </div>

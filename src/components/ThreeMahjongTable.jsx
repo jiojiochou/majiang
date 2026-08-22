@@ -6,70 +6,23 @@ import { tileKey, tileLabel } from '../game/tiles'
 const textureCache = new Map()
 const TILE_SIZE = { width: 0.5, height: 0.16, depth: 0.7 }
 
-function fitCanvasText(context, text, maxWidth) {
-  if (context.measureText(text).width <= maxWidth) return text
-  let shortened = text
-  while (shortened.length > 1 && context.measureText(`${shortened}...`).width > maxWidth) {
-    shortened = shortened.slice(0, -1)
-  }
-  return `${shortened}...`
-}
-
-function createCenterTexture({ round, honba, wallCount, currentWind, message }) {
+function createWindTexture(wind, active) {
   const canvas = document.createElement('canvas')
-  canvas.width = 1024
-  canvas.height = 704
+  canvas.width = 256
+  canvas.height = 256
   const context = canvas.getContext('2d')
-
-  const gradient = context.createLinearGradient(0, 0, 0, canvas.height)
-  gradient.addColorStop(0, '#163b34')
-  gradient.addColorStop(1, '#0a211d')
-  context.fillStyle = gradient
-  context.fillRect(0, 0, canvas.width, canvas.height)
-
-  context.strokeStyle = '#577068'
-  context.lineWidth = 6
-  context.strokeRect(16, 16, canvas.width - 32, canvas.height - 32)
-  context.strokeStyle = 'rgba(225, 190, 103, .35)'
-  context.lineWidth = 2
-  context.strokeRect(29, 29, canvas.width - 58, canvas.height - 58)
-
   context.textAlign = 'center'
   context.textBaseline = 'middle'
   context.letterSpacing = '0px'
-  context.fillStyle = '#a9c0b7'
-  context.font = '600 48px "Noto Sans SC", "PingFang SC", sans-serif'
-  context.fillText(`东风战  ·  ${honba} 本场`, 512, 88)
-
-  context.strokeStyle = 'rgba(146, 177, 165, .3)'
-  context.beginPath()
-  context.moveTo(58, 143)
-  context.lineTo(966, 143)
-  context.stroke()
-
-  context.fillStyle = '#dce5df'
-  context.font = '700 56px "Noto Sans SC", "PingFang SC", sans-serif'
-  context.fillText(`东 ${round} 局`, 226, 332)
-  context.fillText(`余 ${wallCount}`, 798, 332)
-
-  context.fillStyle = '#efc568'
-  context.font = '900 184px "Noto Serif SC", "Songti SC", serif'
-  context.fillText(currentWind, 512, 318)
-
-  context.strokeStyle = '#d7ad55'
-  context.lineWidth = 5
-  context.strokeRect(407, 210, 210, 210)
-  context.strokeStyle = 'rgba(215, 173, 85, .28)'
-  context.lineWidth = 2
-  context.strokeRect(421, 224, 182, 182)
-
-  context.fillStyle = '#e3ece7'
-  context.font = '500 43px "Noto Sans SC", "PingFang SC", sans-serif'
-  context.fillText(fitCanvasText(context, message, 850), 512, 578)
+  context.fillStyle = active ? '#38250d' : '#adc1b9'
+  context.shadowColor = active ? 'rgba(255, 236, 176, .75)' : 'transparent'
+  context.shadowBlur = active ? 10 : 0
+  context.font = '900 170px "Noto Serif SC", "Songti SC", serif'
+  context.fillText(wind, 128, 132)
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
-  texture.anisotropy = 8
+  texture.anisotropy = 4
   texture.needsUpdate = true
   return texture
 }
@@ -267,7 +220,41 @@ function OpponentHand({ player, position }) {
   })
 }
 
-function DiscardTiles({ player, position }) {
+function LatestDiscardMarker({ position }) {
+  const marker = useRef()
+  const ring = useRef()
+
+  useFrame((state) => {
+    const pulse = Math.sin(state.clock.elapsedTime * 4)
+    if (marker.current) marker.current.position.y = position[1] + 0.62 + pulse * 0.035
+    if (ring.current) {
+      ring.current.scale.setScalar(1 + pulse * 0.08)
+      ring.current.material.opacity = 0.48 - pulse * 0.1
+    }
+  })
+
+  return (
+    <>
+      <group ref={marker} position={[position[0], position[1] + 0.62, position[2]]}>
+        <mesh castShadow>
+          <sphereGeometry args={[0.105, 24, 16]} />
+          <meshStandardMaterial color="#ffb632" emissive="#d35a0c" emissiveIntensity={0.65} roughness={0.3} metalness={0.12} />
+        </mesh>
+        <mesh position={[0, -0.135, 0]} rotation={[0, 0, Math.PI]} castShadow>
+          <coneGeometry args={[0.075, 0.18, 20]} />
+          <meshStandardMaterial color="#f28b16" emissive="#b94108" emissiveIntensity={0.45} roughness={0.35} />
+        </mesh>
+        <pointLight color="#ff9f24" intensity={0.9} distance={1.1} decay={2} />
+      </group>
+      <mesh ref={ring} position={[position[0], position[1] + 0.075, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.235, 0.28, 32]} />
+        <meshBasicMaterial color="#ffc24b" transparent opacity={0.48} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+    </>
+  )
+}
+
+function DiscardTiles({ player, position, latestDiscard }) {
   return player.discards.map((tile, index) => {
     const column = index % 6
     const row = Math.floor(index / 6)
@@ -287,7 +274,13 @@ function DiscardTiles({ player, position }) {
       tilePosition = [1.9 + row * 0.58, 0.12, offset]
       rotation = [0, -Math.PI / 2, 0]
     }
-    return <Tile3D key={tile.id} tile={tile} position={tilePosition} rotation={rotation} scale={0.78} />
+    const isLatest = latestDiscard?.playerId === player.id && latestDiscard.tileId === tile.id
+    return (
+      <group key={tile.id}>
+        <Tile3D tile={tile} position={tilePosition} rotation={rotation} scale={0.78} />
+        {isLatest && <LatestDiscardMarker position={tilePosition} />}
+      </group>
+    )
   })
 }
 
@@ -305,37 +298,75 @@ function MeldTiles({ player, position }) {
   })
 }
 
-function CenterUnit({ currentPlayer, round, honba, wallCount, currentWind, message }) {
-  const marker = useRef()
-  const displayTexture = useMemo(
-    () => createCenterTexture({ round, honba, wallCount, currentWind, message }),
-    [currentWind, honba, message, round, wallCount],
-  )
-  useEffect(() => () => displayTexture.dispose(), [displayTexture])
-  useFrame((state, delta) => {
-    if (!marker.current) return
-    marker.current.rotation.z -= delta * 0.55
-    marker.current.material.opacity = 0.38 + Math.sin(state.clock.elapsedTime * 2.4) * 0.12
+function WindSegment({ index, active }) {
+  const segment = useRef()
+  const centers = [-Math.PI / 2, 0, Math.PI / 2, Math.PI]
+  const gap = 0.055
+  const start = centers[index] - Math.PI / 4 + gap / 2
+
+  useFrame((state) => {
+    if (!active || !segment.current) return
+    segment.current.material.emissiveIntensity = 0.65 + Math.sin(state.clock.elapsedTime * 3.5) * 0.18
   })
-  const direction = [[0, 0, 1], [1, 0, 0], [0, 0, -1], [-1, 0, 0]][currentPlayer]
+
+  return (
+    <mesh ref={segment} position={[0, 0.13, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[0.67, 1.03, 40, 1, start, Math.PI / 2 - gap]} />
+      <meshStandardMaterial
+        color={active ? '#d69b2f' : '#244b43'}
+        emissive={active ? '#b96814' : '#000000'}
+        emissiveIntensity={active ? 0.65 : 0}
+        roughness={0.5}
+        metalness={0.22}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  )
+}
+
+function WindLabel({ wind, active, position }) {
+  const texture = useMemo(() => createWindTexture(wind, active), [active, wind])
+  useEffect(() => () => texture.dispose(), [texture])
+
+  return (
+    <mesh position={position} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[0.48, 0.48]} />
+      <meshBasicMaterial map={texture} transparent depthWrite={false} />
+    </mesh>
+  )
+}
+
+function CenterUnit({ currentPlayer, winds }) {
+  const labelPositions = [
+    [0, 0.145, 0.79],
+    [0.79, 0.145, 0],
+    [0, 0.145, -0.79],
+    [-0.79, 0.145, 0],
+  ]
 
   return (
     <group>
-      <mesh position={[0, 0.03, 0]} castShadow receiveShadow>
-        <boxGeometry args={[2.78, 0.16, 1.98]} />
-        <meshStandardMaterial color="#172d29" roughness={0.32} metalness={0.42} />
+      <mesh position={[0, 0.015, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[1.13, 1.17, 0.16, 64]} />
+        <meshStandardMaterial color="#132d29" roughness={0.38} metalness={0.48} />
       </mesh>
-      <mesh position={[0, 0.118, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[2.5, 1.7]} />
-        <meshStandardMaterial map={displayTexture} roughness={0.38} metalness={0.04} />
+      <mesh position={[0, 0.105, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.63, 64]} />
+        <meshStandardMaterial color="#0b211e" roughness={0.42} metalness={0.35} />
       </mesh>
-      <mesh ref={marker} position={[0, 0.128, 0.01]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.48, 0.5, 4]} />
-        <meshBasicMaterial color="#f2cb72" transparent opacity={0.5} side={THREE.DoubleSide} depthWrite={false} />
+      <mesh position={[0, 0.138, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.61, 0.65, 64]} />
+        <meshBasicMaterial color="#7c9b91" transparent opacity={0.55} side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[direction[0] * 1.31, 0.126, direction[2] * 0.91]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.08, 24]} />
-        <meshBasicMaterial color="#ee765e" />
+      {[0, 1, 2, 3].map((index) => (
+        <group key={index}>
+          <WindSegment index={index} active={currentPlayer === index} />
+          <WindLabel wind={winds[index]} active={currentPlayer === index} position={labelPositions[index]} />
+        </group>
+      ))}
+      <mesh position={[0, 0.14, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.11, 32]} />
+        <meshBasicMaterial color="#d7b358" />
       </mesh>
     </group>
   )
@@ -346,17 +377,20 @@ function CameraRig() {
   useEffect(() => {
     const aspect = size.width / size.height
     const distance = aspect < 0.9 ? 19.5 : aspect < 1.25 ? 17.5 : 14.7
-    camera.position.set(0, distance * 0.71, distance * 0.7)
+    const heightRatio = aspect < 0.9 ? 0.84 : aspect < 1.25 ? 0.82 : 0.8
+    const depthRatio = aspect < 0.9 ? 0.54 : aspect < 1.25 ? 0.57 : 0.6
+    const focusZ = aspect < 0.9 ? 0.72 : aspect < 1.25 ? 0.84 : 1
+    camera.position.set(0, distance * heightRatio, distance * depthRatio)
     camera.fov = aspect < 0.9 ? 35 : 37
     camera.near = 0.1
     camera.far = 80
-    camera.lookAt(0, 0, 0.25)
+    camera.lookAt(0, 0, focusZ)
     camera.updateProjectionMatrix()
   }, [camera, size.height, size.width])
   return null
 }
 
-function Scene({ players, wallCount, currentPlayer, round, honba, currentWind, message }) {
+function Scene({ players, latestDiscard, wallCount, currentPlayer }) {
   return (
     <>
       <CameraRig />
@@ -385,23 +419,16 @@ function Scene({ players, wallCount, currentPlayer, round, honba, currentWind, m
       <MeldTiles player={players[2]} position="top" />
       <MeldTiles player={players[3]} position="left" />
       <MeldTiles player={players[1]} position="right" />
-      <DiscardTiles player={players[2]} position="top" />
-      <DiscardTiles player={players[3]} position="left" />
-      <DiscardTiles player={players[1]} position="right" />
-      <DiscardTiles player={players[0]} position="bottom" />
-      <CenterUnit
-        currentPlayer={currentPlayer}
-        round={round}
-        honba={honba}
-        wallCount={wallCount}
-        currentWind={currentWind}
-        message={message}
-      />
+      <DiscardTiles player={players[2]} position="top" latestDiscard={latestDiscard} />
+      <DiscardTiles player={players[3]} position="left" latestDiscard={latestDiscard} />
+      <DiscardTiles player={players[1]} position="right" latestDiscard={latestDiscard} />
+      <DiscardTiles player={players[0]} position="bottom" latestDiscard={latestDiscard} />
+      <CenterUnit currentPlayer={currentPlayer} winds={players.map((player) => player.wind)} />
     </>
   )
 }
 
-export default function ThreeMahjongTable({ players, wallCount, currentPlayer, round, honba, currentWind, message }) {
+export default function ThreeMahjongTable({ players, latestDiscard, wallCount, currentPlayer }) {
   return (
     <div className="three-canvas-wrap" aria-label="3D麻将牌桌">
       <Suspense fallback={<div className="scene-loading">牌桌加载中</div>}>
@@ -413,12 +440,9 @@ export default function ThreeMahjongTable({ players, wallCount, currentPlayer, r
         >
           <Scene
             players={players}
+            latestDiscard={latestDiscard}
             wallCount={wallCount}
             currentPlayer={currentPlayer}
-            round={round}
-            honba={honba}
-            currentWind={currentWind}
-            message={message}
           />
         </Canvas>
       </Suspense>
